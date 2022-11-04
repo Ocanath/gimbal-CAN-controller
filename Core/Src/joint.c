@@ -166,6 +166,10 @@ void update_joint_from_can_data(can_payload_t * payload, joint * j)
 
 		j->dq_rotor = (float)(j->dq_rotor16) * 0.062500f;	//dividing by 16 expresses velocity in units of rad/sec
 	}
+	else
+	{
+		j->q = (float)(payload->i32[0]/4096.f);
+	}
 
 
 	//j->iq_meas = ((float)payload->i16[3])/4096.f;
@@ -207,7 +211,7 @@ int joint_comm(joint * j)
 				if(can_rx_header.StdId == j->id)
 				{
 					node_responsive = 1;
-					update_joint_from_can_data(&can_rx_data, chain);
+					update_joint_from_can_data(&can_rx_data, j);
 				}
 				else
 				{

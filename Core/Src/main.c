@@ -116,7 +116,7 @@ int main(void)
 	HAL_Delay(100);
 
 	for(int i = 0; i < NUM_JOINTS; i++)
-		chain[i].misc_cmd = EN_UART_ENC; //chain[i].misc_cmd = EN_UART_ENC;
+		chain[i].misc_cmd = DIS_UART_ENC; //chain[i].misc_cmd = EN_UART_ENC;
 	for(int i = 0; i < NUM_JOINTS; i++)
 		joint_comm_misc(&chain[i]);
 
@@ -130,7 +130,7 @@ int main(void)
 	chain_comm(chain, NUM_JOINTS);
 
 	rgb_play((rgb_t){0,255,0});
-	can_network_keyboard_discovery();
+//	can_network_keyboard_discovery();
 
 //	joint * j32 = joint_with_id(32,chain,NUM_JOINTS);
 //	j32->ctl.kp = 9.0f;
@@ -145,22 +145,23 @@ int main(void)
 	float qd[NUM_JOINTS] = {0.f};
 	while(1)
 	{
+		qd[0] = chain[1].q;
+		qd[1] = chain[0].q;
 		for(int m = 0; m < NUM_JOINTS; m++)
 		{
 			float e = (qd[m] - chain[m].q);
-			float vq = ctl_PI(e, &chain[m].ctl);
-			int16_t vq16 = (int16_t)(vq*4096.f);
-			if(vq16 > 1000)
-				vq16 = 1000;
-			if(vq16 < -1000)
-				vq16 = -1000;
-			chain[m].mtn16.i16[0] = vq16;
+			float vq = e*300.f;
+			if(vq > 1000.f)
+				vq = 1000.f;
+			if(vq < -1000.f)
+				vq = -1000.f;
+			chain[m].mtn16.i16[0] = (int16_t)vq;
 		}
 
 		for(int m = 0; m < NUM_JOINTS; m++)
 		{
 			/*In the main/actual motion loop, only move joints that have responded properly*/
-			if(chain[m].responsive)
+			//if(chain[m].responsive)
 			{
 				joint_comm(&chain[m]);
 			}
