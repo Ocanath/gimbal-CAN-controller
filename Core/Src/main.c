@@ -130,7 +130,7 @@ int main(void)
 	chain_comm(chain, NUM_JOINTS);
 
 	rgb_play((rgb_t){0,255,0});
-//	can_network_keyboard_discovery();
+	//can_network_keyboard_discovery();
 
 //	joint * j32 = joint_with_id(32,chain,NUM_JOINTS);
 //	j32->ctl.kp = 9.0f;
@@ -143,6 +143,8 @@ int main(void)
 //	j32->sin_q = sin_lookup(400,30);
 //	j32->cos_q = (int32_t)(sin62b(400)>>32);
 	float qd[NUM_JOINTS] = {0.f};
+	uint32_t disp_ts = 0;
+	uint8_t buf[128] = {0};
 	while(1)
 	{
 		qd[0] = chain[1].q;
@@ -168,6 +170,22 @@ int main(void)
 		}
 
 		blink_motors_in_chain();
+		if(HAL_GetTick() > disp_ts)
+		{
+			disp_ts = HAL_GetTick() + 50;
+			int len = int_to_str(chain[0].q32_rotor, buf, 128);
+			buf[len] = ',';
+			buf[len+1] = ' ';
+			len += 2;
+
+			len += int_to_str(chain[1].q32_rotor, &buf[len], 128-len);
+			buf[len] = '\r';
+			buf[len+1] = '\n';
+			len += 2;
+
+			if(len >= 0)
+				m_uart_tx_start(&m_huart2, buf, len);
+		}
 	}
 }
 

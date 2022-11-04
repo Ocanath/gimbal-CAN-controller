@@ -168,7 +168,8 @@ void update_joint_from_can_data(can_payload_t * payload, joint * j)
 	}
 	else
 	{
-		j->q = (float)(payload->i32[0]/4096.f);
+		j->q32_rotor = payload->i32[0];
+		j->q = (float)(j->q32_rotor/4096.f);
 	}
 
 

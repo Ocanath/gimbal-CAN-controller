@@ -97,6 +97,7 @@ typedef struct joint
 
 	//Measured quantites, delivered over can
 	float q;
+	int32_t q32_rotor; 	//POSSIBLE THAT THIS IS NOT UPDATDED: 32bit rotor position (overridden by aenc)
 	int16_t q16;
 	float dq_rotor;
 	int16_t dq_rotor16;
