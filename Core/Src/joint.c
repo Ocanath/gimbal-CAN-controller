@@ -18,6 +18,14 @@ joint chain[NUM_JOINTS] =
 				.q_offset = -8.8f*DEG_TO_RAD,
 				.mtn16 = {{0}},
 				.qd = 0.f,
+				.ctl = {
+						.kp = 9.f,
+						.ki_div = 377.f,
+						.x_pi = 0,
+						.x_sat = 1.5f,
+						.kd = 0.2f/3.f,
+						.tau_sat = 0.85f
+				},
 				.misc_cmd = LED_OFF
 		},
 		{						//2
@@ -29,6 +37,14 @@ joint chain[NUM_JOINTS] =
 				.q_offset = 27.275f*DEG_TO_RAD,
 				.mtn16 = {{0}},
 				.qd = 0.f,
+				.ctl = {
+						.kp = 9.f,
+						.ki_div = 377.f,
+						.x_pi = 0,
+						.x_sat = 1.5f,
+						.kd = 0.2f/3.f,
+						.tau_sat = 0.85f
+				},
 				.misc_cmd = LED_OFF
 		}
 };
@@ -94,7 +110,7 @@ int32_t wrap_fixed(int32_t in, uint32_t k)
     else
         return result;
 }
-
+//anywhereISpossible
 /*
  * return time in us from our us timer, which has a large period register/arr value
  * we can use wrap_fixed with the period register value to prevent discontinuities,

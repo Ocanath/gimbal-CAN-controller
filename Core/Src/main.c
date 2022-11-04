@@ -142,13 +142,19 @@ int main(void)
 //
 //	j32->sin_q = sin_lookup(400,30);
 //	j32->cos_q = (int32_t)(sin62b(400)>>32);
-
+	float qd[NUM_JOINTS] = {0.f};
 	while(1)
 	{
-
 		for(int m = 0; m < NUM_JOINTS; m++)
 		{
-			chain[m].mtn16.i16[0] = 0;
+			float e = (qd[m] - chain[m].q);
+			float vq = ctl_PI(e, &chain[m].ctl);
+			int16_t vq16 = (int16_t)(vq*4096.f);
+			if(vq16 > 1000)
+				vq16 = 1000;
+			if(vq16 < -1000)
+				vq16 = -1000;
+			chain[m].mtn16.i16[0] = vq16;
 		}
 
 		for(int m = 0; m < NUM_JOINTS; m++)
@@ -253,6 +259,7 @@ void can_network_keyboard_discovery(void)
 	}
 
 	print_string("Keyboard mode. Press > to go to next node, < to go back\r\n");
+	print_string("Press X to exit\r\n");
 
 	int can_node_discovery_idx = 0;
 	int prev_discovery_idx = 0;
