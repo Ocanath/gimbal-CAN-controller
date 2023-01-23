@@ -209,6 +209,7 @@ int joint_comm(joint * j)
 			if(HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &can_rx_header, can_rx_data.d) == HAL_OK)
 			{
 				timed_out = 0;
+				exp_ts = 0;
 				if(can_rx_header.StdId == j->id)
 				{
 					node_responsive = 1;
