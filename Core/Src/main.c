@@ -14,6 +14,22 @@ static int prev_led_idx = NUM_JOINTS-1;
 static uint32_t can_tx_ts = 0;
 
 
+/*
+Generic hex checksum calculation.
+TODO: use this in the psyonic API
+*/
+uint32_t fletchers_checksum32(uint32_t* arr, int size)
+{
+	int32_t checksum = 0;
+	int32_t fchk = 0;
+	for (int i = 0; i < size; i++)
+	{
+		checksum += (int32_t)arr[i];
+		fchk += checksum;
+	}
+	return fchk;
+}
+
 static inline float sat_v(float in, float hth, float lth)
 {
 	if(in > hth)
@@ -22,6 +38,7 @@ static inline float sat_v(float in, float hth, float lth)
 		in = lth;
 	return in;
 }
+
 void can_network_keyboard_discovery(void);
 
 /*
@@ -132,19 +149,22 @@ int main(void)
 	rgb_play((rgb_t){0,255,0});
 	//can_network_keyboard_discovery();
 
-//	joint * j32 = joint_with_id(32,chain,NUM_JOINTS);
-//	j32->ctl.kp = 9.0f;
-//	j32->ctl.ki_div = 377.f;
-//	j32->ctl.x_pi = 0.f;
-//	j32->ctl.x_sat = 1.5f;
-//	j32->ctl.kd = 0.20f/3.f;
-//	j32->ctl.tau_sat = 0.85f;
-//
-//	j32->sin_q = sin_lookup(400,30);
-//	j32->cos_q = (int32_t)(sin62b(400)>>32);
 	float qd[NUM_JOINTS] = {0.f};
 	uint32_t disp_ts = 0;
-	uint8_t buf[128] = {0};
+
+	ctl_params_t template_ctl =
+	{
+		.kp = 500.f,
+		.tau_sat = 1000.f,
+
+		.ki_div = 5.f,
+		.x_sat = 1000.f,
+
+		.x_pi = 0
+	};
+	m_mcpy(&chain[0].ctl, &template_ctl,sizeof(ctl_params_t));
+	m_mcpy(&chain[1].ctl, &template_ctl,sizeof(ctl_params_t));
+
 	while(1)
 	{
 		qd[0] = chain[1].q;
@@ -152,11 +172,7 @@ int main(void)
 		for(int m = 0; m < NUM_JOINTS; m++)
 		{
 			float e = (qd[m] - chain[m].q);
-			float vq = e*300.f;
-			if(vq > 1000.f)
-				vq = 1000.f;
-			if(vq < -1000.f)
-				vq = -1000.f;
+			float vq = ctl_PI(e, &chain[m].ctl);
 			chain[m].mtn16.i16[0] = (int16_t)vq;
 		}
 
@@ -170,21 +186,17 @@ int main(void)
 		}
 
 		blink_motors_in_chain();
+
 		if(HAL_GetTick() > disp_ts)
 		{
-			disp_ts = HAL_GetTick() + 50;
-			int len = int_to_str(chain[0].q32_rotor, buf, 128);
-			buf[len] = ',';
-			buf[len+1] = ' ';
-			len += 2;
+			disp_ts = HAL_GetTick() + 10;
 
-			len += int_to_str(chain[1].q32_rotor, &buf[len], 128-len);
-			buf[len] = '\r';
-			buf[len+1] = '\n';
-			len += 2;
+			u32_fmt_t payload[19] = {0};
+			payload[0].i32 = (int32_t)chain[0].q32_rotor;
+			payload[1].i32 = (int32_t)chain[1].q32_rotor;
+			payload[18].u32 = fletchers_checksum32((uint32_t*)payload, 18);
 
-			if(len >= 0)
-				m_uart_tx_start(&m_huart2, buf, len);
+			m_uart_tx_start(&m_huart2, (uint8_t*)payload, sizeof(u32_fmt_t)*19 );
 		}
 	}
 }
